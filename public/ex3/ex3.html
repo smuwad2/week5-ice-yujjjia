@@ -31,18 +31,38 @@
             <p class="text-center">No items</p>
         </div>
     </div>
-    
+
     <script>
         function getCategories() {
             // Fetch categories from the server using Axios
             // and display them in the select element
             // url: http://localhost:3010/categories
 
+            axios.get('http://localhost:3000/categories')
+                .then(response => {
+                    showCategories(response.data);
+                })
+                .catch(error => {
+                    alert("Failed to fetch categories.");
+                });
         }
+
+
 
         function showCategories(categories) {
             // Display the categories in the select element
-            
+            const sel = document.getElementById('selectCategory');
+            // Remove all except default options
+            while (sel.options.length > 2) {
+                sel.remove(2);
+            }
+            categories.forEach(cat => {
+                const opt = document.createElement('option');
+                opt.value = cat;
+                opt.textContent = cat;
+                sel.appendChild(opt);
+            });
+
         }
 
         function getItems() {
@@ -51,14 +71,51 @@
             // If "All" is chosen, fetch all items
             // If a specific category is chosen, fetch items for that category
             // url: http://localhost:3010/items?category=categoryName
-            
+            const sel = document.getElementById('selectCategory');
+            const val = sel.value;
+            if (val === "0") {
+                // Do nothing
+                return;
+            }
+            let url = 'http://localhost:3000/items';
+            if (val !== "all") {
+                url += '?category=' + encodeURIComponent(val);
+            }
+            axios.get(url)
+                .then(res => {
+                    showItems(res.data);
+                })
+                .catch(() => {
+                    document.getElementById('itemsList').innerHTML = '<p class="text-center">No items</p>';
+                });
         }
 
         function showItems(items) {
             // Display the items in the itemsList div
             // Each item should be displayed in a bootstrap card format
             // The display should be responsive 3 columns on large screens, 2 columns on medium screens, and 1 column on small screens
-            
+
+            const listDiv = document.getElementById('itemsList');
+            if (!items || items.length === 0) {
+                listDiv.innerHTML = '<p class="text-center">No items</p>';
+                return;
+            }
+            let html = '';
+            items.forEach(item => {
+                html += `
+        <div class="col-lg-4 col-md-6 col-sm-12 mb-3">
+            <div class="card h-100 text-center">
+                <div class="card-body">
+                    <h5 class="card-title">${item.name}</h5>
+                    <p class="card-text mb-1">Category: ${item.category}</p>
+                    <p class="card-text mb-1">Price: $${item.price.toFixed(2)}</p>
+                    <p class="card-text">Stock: ${item.quantity}</p>
+                </div>
+            </div>
+        </div>
+        `;
+            });
+            listDiv.innerHTML = html;
 
         }
 
